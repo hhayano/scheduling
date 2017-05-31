@@ -6,7 +6,7 @@ err = open("scheduling_error.txt", "w")
 #  1. start times
 #  2. end times
 #  3. day of the shift
-#  4. amount of workers needed
+#  4. amount of workers needed (spots available)
 #  5. list of workers assigned to the shift
 # - Shifts will be used for both the main schedule and the schedule requests
 # - For midshifts/desk shifts, the last element of the list of workers will be on drawer
@@ -23,9 +23,12 @@ class Shift(object):
         self.start_time = float(start)
         self.end_time = float(end)
         self.weekday = day
-        self.num_workers = num_workers
+        self.num_spots = num_workers
         self.workers = []
 
+    # provides a way to check if the shift described by *other* is still available
+    # this is used by the Schedule.has() to check if a Schedule object has a shift
+    #   specified by *other* that is still open
     def equal(self, other):
         if self.start_time == other.start_time and self.end_time == other.end_time and self.weekday == other.weekday:
             return True
@@ -159,7 +162,7 @@ def make_schedule(main_sched, workers):
         err.write("ERROR: Midshift assignment failure - not all midshifts assigned\n")
         return 1
 
-    
+
 
 
 def main():
