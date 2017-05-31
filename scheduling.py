@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import xlrd # For parsing excel sheets
+
 err = open("scheduling_error.txt", "w")
 
 # Shifts will contain:
@@ -136,10 +138,11 @@ def assign_shift(sched, worker, shift_type):
                 return True
         return False
 
+# First work on the midshift scheduling
+#  - First assign midshifts to all workers that want one
+#  - Next assign midshifts to workers that have to get one
 def make_schedule(main_sched, workers):
-    # First work on the midshift scheduling
-    #  - First assign midshifts to all workers that want one
-    #  - Next assign midshifts to workers that have to get one
+
     num_midshift = 14
     workers_left = main_sched.num_workers
     for indiv in workers:
@@ -162,14 +165,40 @@ def make_schedule(main_sched, workers):
         err.write("ERROR: Midshift assignment failure - not all midshifts assigned\n")
         return 1
 
+# Parsing standardized excel files
+# Takes in the file name and optionally a sheet name (Default will be the first sheet)
+def excel_parse(file_name, sheet_name):
+    # First get the sheet with the schedule request
+    workbook = xlrd.open_workbook(file_name)
+    worksheet = None
+    if sheet_name == None:
+        worksheet = workbook.sheet_by_index(0)
+    else:
+        worksheet = workbook.sheet_by_name(sheet_name)
+
+    # Gather simple data
+    name = worksheet.cell(0,1).value
+    requested_hours = worksheet.cell(0,5).value
+    midshift_pref_str = worksheet.cell(9,4).value
+    midshift_pref_str = midshift_pref_str.lower()
+    midshift_pref = False
+    if midshift_pref_str == "yes":
+        midshift_pref = True
 
 
+    # Gather midshift preferences
+
+    # Create the worker instance with corresponding request
+    sched_request = Request(None, None, None, None, None, midshift_pref, requested_hours)
+    worker = Worker(name, None, sched_request)
+
+    return worker
 
 def main():
-    a = Shift(23.75, 6, 0, 2)
-    b = Shift(2, 3, 0, 1)
-    sched = Schedule(12, 19.5, None, None)
-    print sched.has(a, "midshift")
+    test_worker = excel_parse("request.xls", None)
+    print("Name: " + str(test_worker.name))
+    print("Hours Requested: " + str(test_worker.request.num_hours))
+    print("Midshift Preferences: " + str(test_worker.request.mid_pref))
 
 if __name__ == "__main__":
     main()
