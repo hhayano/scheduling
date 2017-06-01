@@ -81,10 +81,6 @@ class Schedule(object):
         return None
 
 
-
-
-
-
 # Requests will contain:
 #  1. list of hours that the worker is not available to work
 #  2. list of midshift preferences
@@ -106,6 +102,7 @@ class Request(object):
         self.second = secondary
         self.mid_pref = midshift_pref
         self.num_hours = num_hours
+
 
 # Worker will contain:
 #  1. name
@@ -185,11 +182,15 @@ def excel_parse(file_name, sheet_name):
     if midshift_pref_str == "yes":
         midshift_pref = True
 
-
     # Gather midshift preferences
+    midshift_list = [Shift(23.75, 6, None, 0) for i in range(7)]
+    for i in range(1, worksheet.ncols):
+        index = int(worksheet.cell(2,i).value)-1
+        midshift_list[index].weekday = i-1
+
 
     # Create the worker instance with corresponding request
-    sched_request = Request(None, None, None, None, None, midshift_pref, requested_hours)
+    sched_request = Request(None, midshift_list, None, None, None, midshift_pref, requested_hours)
     worker = Worker(name, None, sched_request)
 
     return worker
@@ -199,6 +200,7 @@ def main():
     print("Name: " + str(test_worker.name))
     print("Hours Requested: " + str(test_worker.request.num_hours))
     print("Midshift Preferences: " + str(test_worker.request.mid_pref))
+
 
 if __name__ == "__main__":
     main()
