@@ -20,11 +20,16 @@ err = open("scheduling_error.txt", "w")
 class Shift(object):
 
     # For the initialization of a Shift, we will assume that no workers have been assigned
-    #   to the shift
+    #   to the shift. Allow the days to wrap around
     def __init__(self, start, end, day, num_workers):
         self.start_time = float(start)
         self.end_time = float(end)
-        self.weekday = day
+        if day == -1:
+            self.weekday = 6
+        elif day == 7:
+            self.weekday = 0
+        else:
+            self.weekday = day
         self.num_spots = num_workers
         self.workers = []
 
@@ -126,20 +131,32 @@ def assign_shift(sched, worker, shift_type):
     if shift_type == "midshift":
         for shift in worker.request.midshift:
             avail_midshift = sched.has(shift, "midshift")
-            # If there is a midshift to assign
             if avail_midshift != None:
+                # If there is a midshift to assign decrease the number of spots and add
+                #   the chosen worker to the shift on the main schedule
                 avail_midshift.num_workers -= 1
                 avail_midshift.workers.append(worker)
+
+                # For the worker, increment the assigned hours, add the shift to the
+                #   list of assigned shifts, and add the shifts following the midshift
+                #   to the list of shifts that the worker cannot work
                 worker.assigned_hours += 6.25
                 worker.assigned_shifts.append(avail_midshift)
+                illegal_shift1 = Shift(6, 12, avail_midshift.weekday, 0)
+                illegal_shift2 = Shift(21, 24, avail_midshift.weekday - 1, 0)
+                undesired_shift = Shift(12, 3, avail_midshift.weekday, 0)
+                worker.request.unavail.append(illegal_shift1)
+                worker.request.unavail.append(illegal_shift2)
+                worker.request.second.append(undesired_shift)
                 return True
         return False
 
-# First work on the midshift scheduling
-#  - First assign midshifts to all workers that want one
-#  - Next assign midshifts to workers that have to get one
+
 def make_schedule(main_sched, workers):
 
+    # First work on the midshift scheduling
+    #  - First assign midshifts to all workers that want one
+    #  - Next assign midshifts to workers that have to get one
     num_midshift = 14
     workers_left = main_sched.num_workers
     for indiv in workers:
@@ -161,6 +178,8 @@ def make_schedule(main_sched, workers):
     if num_midshift != 0:
         err.write("ERROR: Midshift assignment failure - not all midshifts assigned\n")
         return 1
+
+
 
 # Parsing standardized excel files
 # Takes in the file name and optionally a sheet name (Default will be the first sheet)
