@@ -224,16 +224,84 @@ def excel_parse(file_name, sheet_name):
 
     return worker
 
+# To test
+def midshift_creation(pref_list):
+    shift_list = []
+    for i in pref_list:
+        time = Timeframe(0,6,i)
+        shift = Shift(time, 0)
+        shift_list.append(shift)
+    return shift_list
+
 def main():
     #test_worker = excel_parse("request.xls", None)
+    midshift_list = []
+    midshift_list.append([6, 5, 0, 2, 1, 4, 3])
+    midshift_list.append([5, 2, 1, 6, 3, 0, 4])
+    midshift_list.append([1, 5, 3, 2, 4, 6, 0])
+    midshift_list.append([4, 3, 6, 1, 0, 2, 5])
+    midshift_list.append([2, 6, 5, 3, 1, 4, 0])
+    midshift_list.append([0, 6, 1, 5, 4, 2, 3])
+    midshift_list.append([0, 3, 5, 4, 1, 2, 6])
+    midshift_list.append([0, 6, 3, 4, 2, 1, 5])
+    midshift_list.append([4, 5, 0, 2, 6, 1, 3])
+    midshift_list.append([6, 2, 3, 4, 1, 5, 0])
+    midshift_list.append([1, 6, 3, 0, 2, 4, 5])
+    midshift_list.append([2, 5, 0, 4, 3, 6, 1])
+    midshift_list.append([6, 2, 5, 1, 0, 4, 3])
+    midshift_list.append([4, 2, 0, 1, 3, 6, 5])
+    midshift_list.append([5, 1, 6, 3, 0, 2, 4])
+    midshift_list.append([6, 3, 4, 1, 2, 0, 5])
+    midshift_list.append([6, 0, 2, 3, 5, 4, 1])
+    midshift_list.append([2, 6, 4, 1, 5, 0, 3])
+    midshift_list.append([0, 2, 3, 5, 6, 4, 1])
+    midshift_list.append([4, 5, 6, 1, 2, 0, 3])
+    midshift_list.append([1, 3, 4, 6, 5, 2, 0])
+    midshift_list.append([3, 5, 2, 1, 4, 6, 0])
+    midshift_list.append([5, 2, 3, 1, 4, 0, 6])
+    midshift_list.append([1, 2, 6, 4, 5, 0, 3])
+    midshift_list.append([5, 3, 1, 2, 0, 4, 6])
+    midshift_list.append([3, 0, 6, 2, 5, 1, 4])
+    midshift_list.append([4, 6, 3, 5, 0, 2, 1])
+    midshift_list.append([0, 4, 1, 2, 5, 3, 6])
 
+    mid_pref_list = []
+    mid_pref_list.append(1)
+    mid_pref_list.append(1)
+    mid_pref_list.append(1)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(1)
+    mid_pref_list.append(1)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(1)
+    mid_pref_list.append(1)
+    mid_pref_list.append(1)
+    mid_pref_list.append(1)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+    mid_pref_list.append(0)
+
+    
     # parse requests
     # parse shifts that need to be filled
     # assign midshifts
     # assign desk shifts
     # assign extra shifts
 
-    
+
 
 if __name__ == "__main__":
     main()
