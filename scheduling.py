@@ -21,7 +21,13 @@ class Timeframe(object):
             self.weekday = 0
         else:
             self.weekday = day
-        self.len = end_time - start_time
+        self.len = self.end_time - self.start_time
+
+    def __eq__(self, other):
+        if self.start_time == other.start_time and self.end_time == other.end_time and self.weekday == other.weekday:
+            return True
+        else:
+            return False
 
 # Shifts will contain:
 #  1. timeframe of the shift
@@ -69,18 +75,19 @@ class Schedule(object):
         self.min_hours = float(min_hours)
         self.max_hours = float(max_hours)
         self.shifts = []
-        shifts.append(midshifts)
-        shifts.append(desk_shifts)
-        shifts.append(extra_shifts)
+        self.shifts.append(midshifts)
+        self.shifts.append(desk_shifts)
+        self.shifts.append(extra_shifts)
         self.num_workers = num_workers
 
     # Provides a way to check if a certain shift is still available
     # Returns the shift if it is available, return None if not
     def has(self, target_shift):
-        for shift_type in shifts:
-            for shift in self.shifts[shift_type]:
-                if shift.equal(target_shift) == True and shift.num_workers > 0:
-                    return shift
+        for shift_type_list in self.shifts:
+            if shift_type_list != None:
+                for shift in shift_type_list:
+                    if shift.equal(target_shift) == True and shift.num_spots > 0:
+                        return shift
 
         return None
 
@@ -99,10 +106,10 @@ class Request(object):
 
     def __init__(self, midshift, preferred, available, secondary, midshift_pref, num_hours):
         self.shifts = []
-        shifts.append(midshift)
-        shifts.append(preferred)
-        shifts.append(available)
-        shifts.append(secondary)
+        self.shifts.append(midshift)
+        self.shifts.append(preferred)
+        self.shifts.append(available)
+        self.shifts.append(secondary)
         self.mid_pref = midshift_pref
         self.num_hours = num_hours
 
@@ -133,24 +140,25 @@ def invalidate_shifts(times, worker):
         return
 
     for shift_list in worker.request.shifts:
-        for shift in shift_list:
-            if times.weekday == shift.time_frame.weekday:
-                if times.start_time >= shift.time_frame.start_time and times.start_time < shift.time_frame.end_time:
-                    shift_list.remove(shift)
-                else if times.end_time <= shift.time_frame.end_time and times.end_time > shift.time_frame.start_time:
-                    shift_list.remove(shift)
+        if shift_list != None:
+            for shift in shift_list:
+                if times.weekday == shift.time_frame.weekday:
+                    if times.start_time >= shift.time_frame.start_time and times.start_time < shift.time_frame.end_time:
+                        shift_list.remove(shift)
+                    elif times.end_time <= shift.time_frame.end_time and times.end_time > shift.time_frame.start_time:
+                        shift_list.remove(shift)
 
 # Helper function to assign shifts
 # Assume that shift is the shift in the main schedule
 def assign_shift(worker, shift):
     # Make changes to the shift to indicate that the worker has been assigned to it
     shift.num_spots -= 1
-    shift.worker.append(worker)
+    shift.workers.append(worker)
 
     # Make changes to the worker to indicate that the shift has been assigned to the
     #  worker
     invalidate_shifts(shift.time_frame, worker)
-    worker.assigned_shifts.append[shift]
+    worker.assigned_shifts.append(shift)
     worker.assigned_hours += shift.time_frame.len
 
 # Assigns midshifts to the people that need to get midshifts
@@ -174,6 +182,14 @@ def assign_midshift(main_sched, workers):
                     assign_shift(indiv, avail_midshift)
                     num_midshift -= 1
                     indiv.assignment_flag = False
+                    invalid_time1 = Timeframe(6, 12, avail_midshift.time_frame.weekday)
+                    invalid_time2 = Timeframe(21, 24, avail_midshift.time_frame.weekday-1)
+                    invalidate_shifts(invalid_time1, indiv)
+                    invalidate_shifts(invalid_time2, indiv)
+                    break
+                else:
+                    #print(indiv.name + " " + str(midshift.time_frame.weekday))
+                    pass
 
     # Second give shifts to all the people that need to have midshifts
     if num_midshift > 0:
@@ -185,6 +201,7 @@ def assign_midshift(main_sched, workers):
                     assign_shift(indiv, avail_midshift)
                     num_midshift -= 1
                     indiv.assignment_flag = False
+                    break
 
     if num_midshift != 0:
         err.write("ERROR: Midshift assignment failure - not all midshifts assigned\n")
@@ -236,34 +253,34 @@ def midshift_creation(pref_list):
 def main():
     #test_worker = excel_parse("request.xls", None)
     midshift_list = []
-    midshift_list.append([6, 5, 0, 2, 1, 4, 3])
-    midshift_list.append([5, 2, 1, 6, 3, 0, 4])
-    midshift_list.append([1, 5, 3, 2, 4, 6, 0])
-    midshift_list.append([4, 3, 6, 1, 0, 2, 5])
-    midshift_list.append([2, 6, 5, 3, 1, 4, 0])
-    midshift_list.append([0, 6, 1, 5, 4, 2, 3])
-    midshift_list.append([0, 3, 5, 4, 1, 2, 6])
-    midshift_list.append([0, 6, 3, 4, 2, 1, 5])
-    midshift_list.append([4, 5, 0, 2, 6, 1, 3])
-    midshift_list.append([6, 2, 3, 4, 1, 5, 0])
-    midshift_list.append([1, 6, 3, 0, 2, 4, 5])
-    midshift_list.append([2, 5, 0, 4, 3, 6, 1])
-    midshift_list.append([6, 2, 5, 1, 0, 4, 3])
-    midshift_list.append([4, 2, 0, 1, 3, 6, 5])
-    midshift_list.append([5, 1, 6, 3, 0, 2, 4])
-    midshift_list.append([6, 3, 4, 1, 2, 0, 5])
-    midshift_list.append([6, 0, 2, 3, 5, 4, 1])
-    midshift_list.append([2, 6, 4, 1, 5, 0, 3])
-    midshift_list.append([0, 2, 3, 5, 6, 4, 1])
-    midshift_list.append([4, 5, 6, 1, 2, 0, 3])
-    midshift_list.append([1, 3, 4, 6, 5, 2, 0])
-    midshift_list.append([3, 5, 2, 1, 4, 6, 0])
-    midshift_list.append([5, 2, 3, 1, 4, 0, 6])
-    midshift_list.append([1, 2, 6, 4, 5, 0, 3])
-    midshift_list.append([5, 3, 1, 2, 0, 4, 6])
-    midshift_list.append([3, 0, 6, 2, 5, 1, 4])
-    midshift_list.append([4, 6, 3, 5, 0, 2, 1])
-    midshift_list.append([0, 4, 1, 2, 5, 3, 6])
+    midshift_list.append([6, 5, 0, 2, 1, 4, 3]) #0
+    midshift_list.append([5, 2, 1, 6, 3, 0, 4]) #1
+    midshift_list.append([1, 5, 3, 2, 4, 6, 0]) #2
+    midshift_list.append([4, 3, 6, 1, 0, 2, 5]) #3
+    midshift_list.append([2, 6, 5, 3, 1, 4, 0]) #4
+    midshift_list.append([0, 6, 1, 5, 4, 2, 3]) #5
+    midshift_list.append([0, 3, 5, 4, 1, 2, 6]) #6
+    midshift_list.append([0, 6, 3, 4, 2, 1, 5]) #7
+    midshift_list.append([4, 5, 0, 2, 6, 1, 3]) #8
+    midshift_list.append([6, 2, 3, 4, 1, 5, 0]) #9
+    midshift_list.append([1, 6, 3, 0, 2, 4, 5]) #10
+    midshift_list.append([2, 5, 0, 4, 3, 6, 1]) #11
+    midshift_list.append([6, 2, 5, 1, 0, 4, 3]) #12
+    midshift_list.append([4, 2, 0, 1, 3, 6, 5]) #13
+    midshift_list.append([5, 1, 6, 3, 0, 2, 4]) #14
+    midshift_list.append([6, 3, 4, 1, 2, 0, 5]) #15
+    midshift_list.append([6, 0, 2, 3, 5, 4, 1]) #16
+    midshift_list.append([2, 6, 4, 1, 5, 0, 3]) #17
+    midshift_list.append([0, 2, 3, 5, 6, 4, 1]) #18
+    midshift_list.append([4, 5, 6, 1, 2, 0, 3]) #19
+    midshift_list.append([1, 3, 4, 6, 5, 2, 0]) #20
+    midshift_list.append([3, 5, 2, 1, 4, 6, 0]) #21
+    midshift_list.append([5, 2, 3, 1, 4, 0, 6]) #22
+    midshift_list.append([1, 2, 6, 4, 5, 0, 3]) #23
+    midshift_list.append([5, 3, 1, 2, 0, 4, 6]) #24
+    midshift_list.append([3, 0, 6, 2, 5, 1, 4]) #25
+    midshift_list.append([4, 6, 3, 5, 0, 2, 1]) #26
+    midshift_list.append([0, 4, 1, 2, 5, 3, 6]) #27
 
     mid_pref_list = []
     mid_pref_list.append(1)
@@ -293,8 +310,37 @@ def main():
     mid_pref_list.append(0)
     mid_pref_list.append(0)
     mid_pref_list.append(0)
+    mid_pref_list.append(0)
 
-    
+    test_worker_list = []
+    for i in range(28):
+        midshifts = midshift_creation(midshift_list[i])
+        test_request = Request(midshifts, None, None, None, mid_pref_list[i], 12)
+        test_worker = Worker(str(i), i, test_request)
+        test_worker_list.append(test_worker)
+
+    test_timeframe_list = []
+    for i in range(7):
+        test_timeframe = Timeframe(0,6,i)
+        test_timeframe_list.append(test_timeframe)
+
+    sched_midshift_list = []
+    for times in test_timeframe_list:
+        sched_midshift = Shift(times, 2)
+        sched_midshift_list.append(sched_midshift)
+
+    test_main_sched = Schedule(12, 20, sched_midshift_list, None, None, 28)
+
+    assign_midshift(test_main_sched, test_worker_list)
+
+    for shift in test_main_sched.shifts[0]:
+        print("The people working on " + str(shift.time_frame.weekday) + " is:")
+        for worker in shift.workers:
+            print(worker.name)
+        print("")
+
+
+
     # parse requests
     # parse shifts that need to be filled
     # assign midshifts
