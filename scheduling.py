@@ -207,6 +207,12 @@ def assign_midshift(main_sched, workers):
         err.write("ERROR: Midshift assignment failure - not all midshifts assigned\n")
         return 1
 
+def assign_deskshifts(main_sched, workers):
+    num_deskshifts = 0
+    for shift in main_sched:
+        num_deskshifts += shift.num_spots
+
+    
 
 # Parsing standardized excel files
 # Takes in the file name and optionally a sheet name (Default will be the first sheet)
