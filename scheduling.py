@@ -93,23 +93,25 @@ class Schedule(object):
 
 
 # Requests will contain:
-#  1. list of midshift preferences
-#  2. list of preferred shifts
-#  3. list of available shifts
-#  4. list of secondary choice shifts
+#  1. list of midshifts in preferred order
+#  2. list of desk shifts separated into preferred, available, and secondary
+#  3. list of extra shifts separated into preferred, available, and secondary
 #  5. midshift (yes/no)
 #  6. number of requested hours
 # - Every Worker will have a Schedule Request
-# - Items 1 through 4 will be represented as a list of shifts in that order
+# - Items 1 through 3 will be represented as a list of shifts in that order
 # - Priority will be represented by the order that of the requests in a list
 class Request(object):
 
-    def __init__(self, midshift, preferred, available, secondary, midshift_pref, num_hours):
+    def __init__(self, midshift, desk_preferred, desk_available, desk_secondary, extra_preferred, extra_available, extra_secondary, midshift_pref, num_hours):
         self.shifts = []
         self.shifts.append(midshift)
-        self.shifts.append(preferred)
-        self.shifts.append(available)
-        self.shifts.append(secondary)
+        self.shifts.append(desk_preferred)
+        self.shifts.append(desk_available)
+        self.shifts.append(desk_secondary)
+        self.shifts.append(extra_preferred)
+        self.shifts.append(extra_available)
+        self.shifts.append(extra_secondary)
         self.mid_pref = midshift_pref
         self.num_hours = num_hours
 
@@ -201,6 +203,10 @@ def assign_midshift(main_sched, workers):
                     assign_shift(indiv, avail_midshift)
                     num_midshift -= 1
                     indiv.assignment_flag = False
+                    invalid_time1 = Timeframe(6, 12, avail_midshift.time_frame.weekday)
+                    invalid_time2 = Timeframe(21, 24, avail_midshift.time_frame.weekday-1)
+                    invalidate_shifts(invalid_time1, indiv)
+                    invalidate_shifts(invalid_time2, indiv)
                     break
 
     if num_midshift != 0:
@@ -208,14 +214,42 @@ def assign_midshift(main_sched, workers):
         return 1
 
 def assign_deskshifts(main_sched, workers):
+    # First count the number of deskshifts we need to assign
     num_deskshifts = 0
     for shift in main_sched:
         num_deskshifts += shift.num_spots
 
-    
+    # First assign 6 hours to people that didn't get midshifts
+    for indiv in workers:
+        if indiv.assignment_flag == False:
+            break
+        else:
+            for shift_list in range(1,3):
+                if indiv.assigned_hours == 6:
+                    indiv.assignment_flag = False
+                    break
+                for deskshift in indiv.request.shifts[shift_list]:
+                    avail_deskshift = main_sched.has(deskshift)
+                    if avail_deskshift != None:
+                        assign_shift(indiv, avail_deskshift)
+                        num_deskshift -= 1
+                        if indiv.assigned_hours == 6:
+                            indiv.assignment_flag = False
+                            break
+
+    # Second assign 3 hours in rotation until A) everyone has min OR B) run out of desk
+    #  shifts
+    # A)
+    while workers[-1].assigned_hours < main_sched.min_hours and num_deskshifts > 0:
+        for indiv in workers:
+            for shift_list in range(1,3):
+                
+
+
 
 # Parsing standardized excel files
 # Takes in the file name and optionally a sheet name (Default will be the first sheet)
+# OUTDATED!!!!!
 def excel_parse(file_name, sheet_name):
     # First get the sheet with the schedule request
     workbook = xlrd.open_workbook(file_name)
@@ -321,7 +355,7 @@ def main():
     test_worker_list = []
     for i in range(28):
         midshifts = midshift_creation(midshift_list[i])
-        test_request = Request(midshifts, None, None, None, mid_pref_list[i], 12)
+        test_request = Request(midshifts, None, None, None, None, None, None, mid_pref_list[i], 12)
         test_worker = Worker(str(i), i, test_request)
         test_worker_list.append(test_worker)
 
