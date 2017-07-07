@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import xlrd # For parsing excel sheets
+import os
 
 err = open("scheduling_error.txt", "w")
 
@@ -241,6 +242,28 @@ def excel_parse(file_name, sheet_name):
 
     return worker
 
+# Parses excel schedule for list of workers in priority order
+def excel_worker_list(file_name, excluded_file):
+
+    # Get worker cells from the file
+    workbook = xlrd.open_workbook(file_name)
+    worksheet = workbook.sheet_by_index(0)
+    workers = worksheet.col_slice(9)
+
+    # Get list of names that are included in the file, but not counted as workers
+    excludedfile = open(excluded_file, "r")
+    excludedlist = excludedfile.read().splitlines()
+
+    workerlist = []
+    count = 1
+    # Create list, adding workers only if they are actually working
+    for worker in workers:
+        if worker.value not in excludedlist:
+            workerlist.append(Worker(worker.value, count, None))
+            count += 1
+
+    return workerlist
+
 # To test
 def midshift_creation(pref_list):
     shift_list = []
@@ -250,8 +273,8 @@ def midshift_creation(pref_list):
         shift_list.append(shift)
     return shift_list
 
-def main():
-    #test_worker = excel_parse("request.xls", None)
+def haji_test():
+        #test_worker = excel_parse("request.xls", None)
     midshift_list = []
     midshift_list.append([6, 5, 0, 2, 1, 4, 3]) #0
     midshift_list.append([5, 2, 1, 6, 3, 0, 4]) #1
@@ -333,11 +356,12 @@ def main():
 
     assign_midshift(test_main_sched, test_worker_list)
 
+    haji_test_output = open("test/haji_test", "w")
     for shift in test_main_sched.shifts[0]:
-        print("The people working on " + str(shift.time_frame.weekday) + " is:")
+        haji_test_output.write("The people working on " + str(shift.time_frame.weekday) + " is/are: \n")
         for worker in shift.workers:
-            print(worker.name)
-        print("")
+            haji_test_output.write(worker.name + '\n')
+        haji_test_output.write("")
 
 
 
@@ -346,6 +370,25 @@ def main():
     # assign midshifts
     # assign desk shifts
     # assign extra shifts
+
+def worker_test():
+    workers = excel_worker_list("schedules/Week 2.xlsx", "excluded.txt")
+    workerfile = open("test/workertest.txt", "w")
+    for worker in workers:
+        workerfile.write("Name: " + worker.name + "  Priority: " + str(worker.priority) + "\n")
+
+def run_tests():
+    try: 
+        os.makedirs("test/")
+    except OSError:
+        if not os.path.isdir("test/"):
+            raise
+
+    worker_test()
+    haji_test()
+
+def main():
+    run_tests()
 
 
 
