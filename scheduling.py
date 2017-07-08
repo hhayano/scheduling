@@ -221,30 +221,52 @@ def assign_deskshifts(main_sched, workers):
 
     # First assign 6 hours to people that didn't get midshifts
     for indiv in workers:
-        if indiv.assignment_flag == False:
-            break
+        error_code = assign_deskshift_helper(main_sched, indiv, 1, 3, 6)
+        if error_code != 0:
+            err.write("ERROR: Desk Shift assignment failure - initial 6hr block not assigned properly\n")
         else:
-            for shift_list in range(1,3):
-                if indiv.assigned_hours == 6:
-                    indiv.assignment_flag = False
-                    break
-                for deskshift in indiv.request.shifts[shift_list]:
-                    avail_deskshift = main_sched.has(deskshift)
-                    if avail_deskshift != None:
-                        assign_shift(indiv, avail_deskshift)
-                        num_deskshift -= 1
-                        if indiv.assigned_hours == 6:
-                            indiv.assignment_flag = False
-                            break
+            num_deskshifts -= 2
+            indiv.assignment_flag = False
 
-    # Second assign 3 hours in rotation until A) everyone has min OR B) run out of desk
-    #  shifts
+    for indiv in workers:
+        if indiv.assignment_flag == False:
+            indiv.assignment_flag = True
+        else:
+            err.write("ERROR: Desk Shift assignment failure - initial 6hr block not assigned properly\n")
+
+    # Second assign 3 hours in rotation until A) everyone has requested hours OR B) run
+    #  out of desk shifts
     # A)
-    while workers[-1].assigned_hours < main_sched.min_hours and num_deskshifts > 0:
+    workers_left = main_sched.num_workers
+    while workers_left < num_deskshifts and workers_left > 0 and num_deskshifts > 0:
         for indiv in workers:
-            for shift_list in range(1,3):
-                
+            if num_deskshifts <= 0:
+                break
+            error_code = assign_deskshift_helper(main_sched, indiv, 1, 3, indiv.assigned_hours+3)
+            if error_code != 0:
+                err.write("ERROR: Desk Shift assignment failure - initial 6hr block not assigned properly\n")
+            else:
+                if indiv.assigned_hours > indiv.request.num_hours:
+                    indiv.assignment_flag = False
+                    workers_left -= 1
+                    num_deskshifts -= 1
 
+    
+
+
+
+
+def assign_deskshift_helper(schedule, worker, shift_list_start, shift_list_end, target_hours):
+    if worker.assignment_flag == False:
+        return 0
+    for shift_list in range(shift_list_start, shift_list_end+1):
+        for deskshift in indiv.request.shifts[shift_list]:
+            avail_deskshift = schedule.has(deskshift)
+            if avail_deskshift != None:
+                assign_shift(worker, avail_deskshift)
+                if worker.assigned_hours == target_hours:
+                    return 0
+    return 1
 
 
 # Parsing standardized excel files
