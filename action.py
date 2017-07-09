@@ -90,6 +90,7 @@ def assign_midshift(main_sched, workers):
 
 # Takes the list of workers and schedule and assigns the desk shifts to the workers.
 # Assumes that midshifts have already been assigned and some people are down in hours.
+# NOT TESTED FOR ACCURACY YET
 def assign_deskshifts(main_sched, workers):
     # First count the number of deskshifts we need to assign
     num_deskshifts = 0
@@ -130,6 +131,39 @@ def assign_deskshifts(main_sched, workers):
 
     # If everyone has requested hours and there are still desk shifts left, assign
     # the remaining shifts to the low priority workers
+    if num_deskshifts == 0:
+        return 0
+    elif num_deskshifts < 0:
+        err.write("ERROR: Desk Shift Overassignment\n")
+        return 1
+    else:
+        for indiv in workers:
+            if indiv.assigned_hours < main_sched.max_hours:
+                workers_left += 1
+            else:
+                workers.remove(indiv)
+        while num_deskshifts > 0 and workers_left > 0:
+            offset = main_sched.num_workers - num_deskshifts
+            if offset < 0:
+                offset = 0
+            for indiv in workers[offset:]:
+                if indiv.assigned_hours+3 <= main_sched.max_hours:
+                    indiv.assignment_flag = True
+                else:
+                    indiv.assignment_flag = False
+                error_code = assign_deskshift_helper(main_sched, indiv, 1, 3, indiv.assigned_hours+3)
+                if error_code != 0:
+                    err.write("ERROR: Desk Shift assignment failure - leftover desk shift assignment failed\n")
+                else:
+                    indiv.assignment_flag = False
+                    num_deskshifts -= 1
+                    workers_left -= 1
+
+    if num_deskshifts > 0:
+        err.write("ERROR: Desk Shift assignment failure - desk shifts leftover\n")
+        return 1
+
+    return 0
 
 # Searches through the segment of the worker.shifts[] specified by shift_list_start and
 # shift_list_end and assigns available shifts to the worker until the target_hours are
