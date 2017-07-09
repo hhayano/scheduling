@@ -5,8 +5,9 @@ import os
 import object
 import action
 
+# Create a bunch of fake midshift requests and see if the midshift assignment works
 def midshift_test():
-        #test_worker = excel_parse("request.xls", None)
+    #test_worker = excel_parse("request.xls", None)
     midshift_list = []
     midshift_list.append([6, 5, 0, 2, 1, 4, 3]) #0
     midshift_list.append([5, 2, 1, 6, 3, 0, 4]) #1
@@ -67,6 +68,7 @@ def midshift_test():
     mid_pref_list.append(0)
     mid_pref_list.append(0)
 
+    # Create the list of workers that we will pass into the schedule creation function
     test_worker_list = []
     for i in range(28):
         midshifts = action.midshift_creation(midshift_list[i])
@@ -74,6 +76,7 @@ def midshift_test():
         test_worker = object.Worker(str(i), i, test_request)
         test_worker_list.append(test_worker)
 
+    # Create the list of midshifts that we will use for the main schedule
     test_timeframe_list = []
     for i in range(7):
         test_timeframe = object.Timeframe(0,6,i)
@@ -84,24 +87,18 @@ def midshift_test():
         sched_midshift = object.Shift(times, 2)
         sched_midshift_list.append(sched_midshift)
 
+    # Create the main schedule using the list of midshift created above
     test_main_sched = object.Schedule(12, 20, sched_midshift_list, None, None, 28)
 
     action.assign_midshift(test_main_sched, test_worker_list)
 
+    # Print the schedule
     haji_test_output = open("test/haji_test", "w")
     for shift in test_main_sched.shifts[0]:
         haji_test_output.write("The people working on " + str(shift.time_frame.weekday) + " is/are: \n")
         for worker in shift.workers:
             haji_test_output.write(worker.name + '\n')
         haji_test_output.write("")
-
-
-
-    # parse requests
-    # parse shifts that need to be filled
-    # assign midshifts
-    # assign desk shifts
-    # assign extra shifts
 
 def worker_test():
     workers = action.excel_worker_list("schedules/Week 2.xlsx", "excluded.txt")

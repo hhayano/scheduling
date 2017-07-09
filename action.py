@@ -21,7 +21,9 @@ def invalidate_shifts(times, worker):
                     elif times.end_time <= shift.time_frame.end_time and times.end_time > shift.time_frame.start_time:
                         shift_list.remove(shift)
 
-# Helper function to assign shifts
+# Adds the worker to the shift and decreases the number of spots available for the shift
+# Invalidates the timeframe of the shift for the other shifts that the worker is available
+#  to work.
 # Assume that shift is the shift in the main schedule
 def assign_shift(worker, shift):
     # Make changes to the shift to indicate that the worker has been assigned to it
@@ -35,6 +37,8 @@ def assign_shift(worker, shift):
     worker.assigned_hours += shift.time_frame.len
 
 # Assigns midshifts to the people that need to get midshifts
+# Assumes that no shifts have been assigned to any worker and that workers are only going
+# to have 1 midshift max
 def assign_midshift(main_sched, workers):
 
     num_midshift = 0
@@ -84,6 +88,8 @@ def assign_midshift(main_sched, workers):
         err.write("ERROR: Midshift assignment failure - not all midshifts assigned\n")
         return 1
 
+# Takes the list of workers and schedule and assigns the desk shifts to the workers.
+# Assumes that midshifts have already been assigned and some people are down in hours.
 def assign_deskshifts(main_sched, workers):
     # First count the number of deskshifts we need to assign
     num_deskshifts = 0
@@ -117,16 +123,17 @@ def assign_deskshifts(main_sched, workers):
             if error_code != 0:
                 err.write("ERROR: Desk Shift assignment failure - initial 6hr block not assigned properly\n")
             else:
-                if indiv.assigned_hours > indiv.request.num_hours:
+                if indiv.assigned_hours >= indiv.request.num_hours:
                     indiv.assignment_flag = False
                     workers_left -= 1
                     num_deskshifts -= 1
 
+    # If everyone has requested hours and there are still desk shifts left, assign
+    # the remaining shifts to the low priority workers
 
-
-
-
-
+# Searches through the segment of the worker.shifts[] specified by shift_list_start and
+# shift_list_end and assigns available shifts to the worker until the target_hours are
+# filled
 def assign_deskshift_helper(schedule, worker, shift_list_start, shift_list_end, target_hours):
     if worker.assignment_flag == False:
         return 0
