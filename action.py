@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import xlrd # For parsing excel sheets
-import os
 import object
 
 err = open("error_action.txt", "w")

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import xlrd # For parsing excel sheets
 import os
 import object
 import action

@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import xlrd # For parsing excel sheets
-import os
-
 err = open("error_object.txt", "w")
 
 # Timeframe will contain:
